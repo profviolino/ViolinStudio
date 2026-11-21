@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violin studio</title>
+  <style>
+    /* ==========================================================================
+       STILI GLOBALI - UN SOLO CARATTERE SENZA GRAZIE, GRANDE E AD ALTO CONTRASTO
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #FFFFFF;
+      color: #0A0A0A;
+      font-size: 20px;
+      line-height: 1.4;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      padding: 16px 14px 44px;
+    }
+
+    /* Contenitore principale centrato e fluido per telefono e tablet */
+    .app {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Intestazione con titolo dell'app */
+    header {
+      text-align: center;
+      padding-bottom: 12px;
+      border-bottom: 4px solid #0A0A0A;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      margin: 0 0 14px 0;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    /* Riquadri delle sezioni */
+    .card {
+      background-color: #F7F7F7;
+      border: 3px solid #0A0A0A;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    /* Messaggio di errore chiaro se traccia.mp3 non viene trovato */
+    .errore-box {
+      display: none;
+      background-color: #FFF0F0;
+      border: 4px solid #B00020;
+      border-radius: 14px;
+      padding: 16px;
+      color: #7A0016;
+      font-weight: 700;
+    }
+
+    .errore-box.visibile {
+      display: block;
+    }
+
+    .errore-box p {
+      margin: 0 0 12px 0;
+    }
+
+    /* Pulsanti grandi e ad alto contrasto per uso comodo sul telefono */
+    button {
+      min-height: 60px;
+      padding: 12px 14px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #0A0A0A;
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 12px;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      transition: background-color 0.1s ease, color 0.1s ease, transform 0.06s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:focus-visible,
+    input[type="range"]:focus-visible {
+      outline: 4px solid #0044CC;
+      outline-offset: 2px;
+    }
+
+    button.attivo {
+      background-color: #0A0A0A;
+      color: #FFFFFF;
+    }
+
+    button.loop-acceso {
+      background-color: #065F46;
+      color: #FFFFFF;
+    }
+
+    .btn-largo {
+      width: 100%;
+    }
+
+    /* Griglie adattive */
+    .riga-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .riga-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .riga-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       SEZIONE 1: RIPRODUZIONE, TEMPO E BARRA DI SCORRIMENTO
+       ========================================================================== */
+    .tempo-display {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      margin: 16px 0 12px;
+      padding: 10px;
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 10px;
+    }
+
+    .barra-contenitore {
+      padding: 10px 0 6px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 20px;
+      background: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #0A0A0A;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 3px #0A0A0A;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #0A0A0A;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 3px #0A0A0A;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       SEZIONE 3: LOOP PASSAGGIO E AGGIUSTAMENTO PUNTI
+       ========================================================================== */
+    .punti-loop {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .punto-riga {
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .punto-testata {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      font-size: 21px;
+    }
+
+    .punto-valore {
+      font-size: 24px;
+      font-variant-numeric: tabular-nums;
+      background-color: #F0F0F0;
+      padding: 4px 12px;
+      border: 2px solid #0A0A0A;
+      border-radius: 8px;
+    }
+
+    .avviso-inline {
+      margin-top: 12px;
+      padding: 12px;
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 10px;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
+
+    .avviso-inline.visibile {
+      display: block;
+    }
+
+    /* ==========================================================================
+       SEZIONE 5: METRONOMO SEPARATO
+       ========================================================================== */
+    .bpm-pannello {
+      display: grid;
+      grid-template-columns: 76px 1fr 76px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bpm-pannello button {
+      font-size: 32px;
+      font-weight: 800;
+      min-height: 66px;
+    }
+
+    .bpm-valore-box {
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .bpm-numero {
+      display: block;
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bpm-etichetta {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .battiti-barra {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .battito-indicatore {
+      height: 50px;
+      background-color: #FFFFFF;
+      border: 3px solid #0A0A0A;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    /* Primo movimento accentato in rosso ad alto contrasto */
+    .battito-indicatore.accento-attivo {
+      background-color: #B00020;
+      color: #FFFFFF;
+      transform: scale(1.04);
+    }
+
+    /* Movimenti 2, 3, 4 */
+    .battito-indicatore.normale-attivo {
+      background-color: #0A0A0A;
+      color: #FFFFFF;
+    }
+
+    /* Adattamento per schermi molto stretti */
+    @media (max-width: 380px) {
+      .riga-4 button {
+        padding: 10px 4px;
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <!-- Titolo principale richiesto -->
+    <header>
+      <h1>Violin studio</h1>
+    </header>
+
+    <!-- Avviso di errore visibile solo se traccia.mp3 manca o non è leggibile -->
+    <div id="box-errore" class="errore-box" role="alert">
+      <p id="testo-errore">File audio non trovato: controlla che «traccia.mp3» sia nella stessa cartella di questa pagina.</p>
+      <button type="button" id="btn-riprova" class="btn-largo">Riprova a caricare traccia.mp3</button>
+    </div>
+
+    <!-- Elemento audio locale nella stessa cartella dell'app -->
+    <audio id="audio" preload="metadata">
+      <source id="sorgente-audio" src="traccia.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- 1. PLAY E PAUSA + BARRA DI SCORRIMENTO + TEMPO IN MINUTI E SECONDI -->
+    <section class="card" aria-labelledby="titolo-riproduzione">
+      <h2 id="titolo-riproduzione">Riproduzione</h2>
+      <div class="riga-2">
+        <button type="button" id="btn-play">▶ Play</button>
+        <button type="button" id="btn-pausa">❚❚ Pausa</button>
+      </div>
+      <div class="tempo-display" aria-live="off">
+        <span id="tempo-corrente">00:00</span> / <span id="tempo-totale">00:00</span>
+      </div>
+      <div class="barra-contenitore">
+        <input
+          type="range"
+          id="barra-avanzamento"
+          min="0"
+          max="100"
+          step="0.1"
+          value="0"
+          aria-label="Posizione nel brano"
+        >
+      </div>
+    </section>
+
+    <!-- 2. VELOCITÀ DI RIPRODUZIONE CON PRESERVESPITCH -->
+    <section class="card" aria-labelledby="titolo-velocita">
+      <h2 id="titolo-velocita">Velocità (intonazione invariata)</h2>
+      <div class="riga-4" id="gruppo-velocita">
+        <button type="button" data-speed="0.5" aria-pressed="false">50%</button>
+        <button type="button" data-speed="0.75" aria-pressed="false">75%</button>
+        <button type="button" data-speed="0.9" aria-pressed="false">90%</button>
+        <button type="button" data-speed="1" class="attivo" aria-pressed="true">100%</button>
+      </div>
+    </section>
+
+    <!-- 3. RIPETI UN PASSAGGIO (SEGNA INIZIO/FINE, -1s/+1s, LOOP ACCESO/SPENTO) -->
+    <section class="card" aria-labelledby="titolo-loop">
+      <h2 id="titolo-loop">Ripeti un passaggio</h2>
+      <div class="riga-2">
+        <button type="button" id="btn-segna-inizio">Segna inizio</button>
+        <button type="button" id="btn-segna-fine">Segna fine</button>
+      </div>
+
+      <div class="punti-loop">
+        <div class="punto-riga">
+          <div class="punto-testata">
+            <span>Inizio passaggio</span>
+            <span id="valore-inizio" class="punto-valore">--:--</span>
+          </div>
+          <div class="riga-2">
+            <button type="button" id="btn-inizio-meno" aria-label="Inizio meno 1 secondo">−1s</button>
+            <button type="button" id="btn-inizio-piu" aria-label="Inizio più 1 secondo">+1s</button>
+          </div>
+        </div>
+
+        <div class="punto-riga">
+          <div class="punto-testata">
+            <span>Fine passaggio</span>
+            <span id="valore-fine" class="punto-valore">--:--</span>
+          </div>
+          <div class="riga-2">
+            <button type="button" id="btn-fine-meno" aria-label="Fine meno 1 secondo">−1s</button>
+            <button type="button" id="btn-fine-piu" aria-label="Fine più 1 secondo">+1s</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" id="btn-loop" class="btn-largo" aria-pressed="false">Loop spento</button>
+      <div id="stato-loop" class="avviso-inline" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- 4. PAUSA TRA UNA RIPETIZIONE E L'ALTRA (0, 2 O 4 SECONDI) -->
+    <section class="card" aria-labelledby="titolo-pausa-loop">
+      <h2 id="titolo-pausa-loop">Pausa tra ripetizioni</h2>
+      <div class="riga-3" id="gruppo-pausa-loop">
+        <button type="button" data-pausa="0" class="attivo" aria-pressed="true">0 s</button>
+        <button type="button" data-pausa="2" aria-pressed="false">2 s</button>
+        <button type="button" data-pausa="4" aria-pressed="false">4 s</button>
+      </div>
+    </section>
+
+    <!-- 5. METRONOMO SEPARATO GENERATO DAL BROWSER (40 - 200 BPM, ACCENTO SUL 1° DI 4) -->
+    <section class="card" aria-labelledby="titolo-metronomo">
+      <h2 id="titolo-metronomo">Metronomo (accento sul 1° di 4)</h2>
+      <div class="bpm-pannello">
+        <button type="button" id="btn-bpm-meno" aria-label="Diminuisci battiti al minuto">−</button>
+        <div class="bpm-valore-box">
+          <span id="valore-bpm" class="bpm-numero">80</span>
+          <span class="bpm-etichetta">battiti / min</span>
+        </div>
+        <button type="button" id="btn-bpm-piu" aria-label="Aumenta battiti al minuto">+</button>
+      </div>
+
+      <div class="battiti-barra" aria-hidden="true">
+        <div class="battito-indicatore" id="battito-0">1</div>
+        <div class="battito-indicatore" id="battito-1">2</div>
+        <div class="battito-indicatore" id="battito-2">3</div>
+        <div class="battito-indicatore" id="battito-3">4</div>
+      </div>
+
+      <button type="button" id="btn-metronomo" class="btn-largo" aria-pressed="false">Avvia metronomo</button>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ========================================================================
+         RIFERIMENTI AGLI ELEMENTI DEL DOM
+         ======================================================================== */
+      const audio = document.getElementById("audio");
+      const sorgenteAudio = document.getElementById("sorgente-audio");
+      const boxErrore = document.getElementById("box-errore");
+      const testoErrore = document.getElementById("testo-errore");
+      const btnRiprova = document.getElementById("btn-riprova");
+
+      const btnPlay = document.getElementById("btn-play");
+      const btnPausa = document.getElementById("btn-pausa");
+      const tempoCorrenteEl = document.getElementById("tempo-corrente");
+      const tempoTotaleEl = document.getElementById("tempo-totale");
+      const barraAvanzamento = document.getElementById("barra-avanzamento");
+
+      const pulsantiVelocita = document.querySelectorAll("#gruppo-velocita button");
+
+      const btnSegnaInizio = document.getElementById("btn-segna-inizio");
+      const btnSegnaFine = document.getElementById("btn-segna-fine");
+      const valoreInizioEl = document.getElementById("valore-inizio");
+      const valoreFineEl = document.getElementById("valore-fine");
+      const btnInizioMeno = document.getElementById("btn-inizio-meno");
+      const btnInizioPiu = document.getElementById("btn-inizio-piu");
+      const btnFineMeno = document.getElementById("btn-fine-meno");
+      const btnFinePiu = document.getElementById("btn-fine-piu");
+      const btnLoop = document.getElementById("btn-loop");
+      const statoLoopEl = document.getElementById("stato-loop");
+
+      const pulsantiPausaLoop = document.querySelectorAll("#gruppo-pausa-loop button");
+
+      /* ========================================================================
+         STATO IN MEMORIA (NESSUN DATO SALVATO SU DISCO O RETE)
+         ======================================================================== */
+      let velocitaCorrente = 1;
+      let trascinamentoBarra = false;
+      let erroreAudioPresente = false;
+
+      let inizioLoop = null;
+      let fineLoop = null;
+      let loopAttivo = false;
+      let secondiPausaLoop = 0;
+      let inAttesaRipetizione = false;
+      let timerRipetizione = null;
+      let intervalloContoRovescia = null;
+      let rafLoopId = null;
+
+      /* ========================================================================
+         FUNZIONI DI UTILITÀ PER TEMPO, INTONAZIONE ED ERRORI
+         ======================================================================== */
+
+      /**
+       * Converte un valore in secondi nel formato leggibile MM:SS.
+       */
+      function formattaTempo(secondi) {
+        if (!Number.isFinite(secondi) || secondi < 0) {
+          return "00:00";
+        }
+        const totSec = Math.floor(secondi);
+        const min = Math.floor(totSec / 60);
+        const sec = totSec % 60;
+        return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+      }
+
+      /**
+       * Restituisce la durata valida della traccia audio in secondi.
+       */
+      function ottieniDurata() {
+        return Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+      }
+
+      /**
+       * Imposta la velocità mantenendo invariata l'intonazione (preservesPitch).
+       */
+      function mantieniIntonazione() {
+        try {
+          if ("preservesPitch" in audio) audio.preservesPitch = true;
+          if ("mozPreservesPitch" in audio) audio.mozPreservesPitch = true;
+          if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = true;
+          audio.playbackRate = velocitaCorrente;
+        } catch (err) {
+          /* Ignora eventuali restrizioni temporanee prima del caricamento */
+        }
+      }
+
+      /**
+       * Mostra un avviso chiaro all'utente se traccia.mp3 non è disponibile.
+       */
+      function mostraErroreAudio(messaggio) {
+        erroreAudioPresente = true;
+        testoErrore.textContent = messaggio;
+        boxErrore.classList.add("visibile");
+        annullaAttesaRipetizione();
+        aggiornaStatoPlayPausa();
+      }
+
+      function nascondiErroreAudio() {
+        erroreAudioPresente = false;
+        boxErrore.classList.remove("visibile");
+      }
+
+      function mostraAvvisoLoop(testo) {
+        if (!testo) {
+          statoLoopEl.textContent = "";
+          statoLoopEl.classList.remove("visibile");
+        } else {
+          statoLoopEl.textContent = testo;
+          statoLoopEl.classList.add("visibile");
+        }
+      }
+
+      function aggiornaStatoPlayPausa() {
+        const staSuonando = !audio.paused && !audio.ended;
+        btnPlay.classList.toggle("attivo", staSuonando);
+        btnPausa.classList.toggle("attivo", !staSuonando && !inAttesaRipetizione);
+      }
+
+      function aggiornaInterfacciaTempo() {
+        const durata = ottieniDurata();
+        const corrente = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+
+        tempoTotaleEl.textContent = formattaTempo(durata);
+        if (!trascinamentoBarra) {
+          tempoCorrenteEl.textContent = formattaTempo(corrente);
+          barraAvanzamento.max = durata > 0 ? durata : 100;
+          barraAvanzamento.value = durata > 0 ? corrente : 0;
+        }
+      }
+
+      /* ========================================================================
+         GESTIONE CARICAMENTO ED ERRORI DI TRACCIA.MP3
+         ======================================================================== */
+      audio.addEventListener("error", function () {
+        mostraErroreAudio(
+          "Impossibile aprire «traccia.mp3». Verifica che il file si trovi nella stessa cartella di questa app."
+        );
+      });
+
+      sorgenteAudio.addEventListener("error", function () {
+        mostraErroreAudio(
+          "File «traccia.mp3» non trovato nella cartella dell'app. Inserisci il file nella stessa cartella e premi Riprova."
+        );
+      });
+
+      btnRiprova.addEventListener("click", function () {
+        try {
+          nascondiErroreAudio();
+          sorgenteAudio.src = "traccia.mp3";
+          audio.load();
+          mantieniIntonazione();
+        } catch (err) {
+          mostraErroreAudio("Errore durante il tentativo di ricaricare «traccia.mp3».");
+        }
+      });
+
+      audio.addEventListener("loadedmetadata", function () {
+        nascondiErroreAudio();
+        mantieniIntonazione();
+        aggiornaInterfacciaTempo();
+      });
+
+      audio.addEventListener("canplay", function () {
+        nascondiErroreAudio();
+        mantieniIntonazione();
+      });
+
+      audio.addEventListener("ratechange", function () {
+        if ("preservesPitch" in audio && !audio.preservesPitch) {
+          audio.preservesPitch = true;
+        }
+      });
+
+      /* ========================================================================
+         1. CONTROLLI PLAY, PAUSA E BARRA DI SCORRIMENTO
+         ======================================================================== */
+      function avviaRiproduzione() {
+        try {
+          annullaAttesaRipetizione();
+          mantieniIntonazione();
+
+          if (loopAttivo && inizioLoop !== null && fineLoop !== null) {
+            if (audio.currentTime < inizioLoop || audio.currentTime >= fineLoop) {
+              audio.currentTime = inizioLoop;
+            }
+          }
+
+          const promessaPlay = audio.play();
+          if (promessaPlay !== undefined) {
+            promessaPlay
+              .then(function () {
+                nascondiErroreAudio();
+                mantieniIntonazione();
+                aggiornaStatoPlayPausa();
+                avviaControlloLoop();
+              })
+              .catch(function () {
+                if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+                  mostraErroreAudio(
+                    "File «traccia.mp3» non trovato o non leggibile nella cartella dell'app."
+                  );
+                }
+                aggiornaStatoPlayPausa();
+              });
+          }
+        } catch (err) {
+          mostraErroreAudio("Impossibile avviare la riproduzione di «traccia.mp3».");
+        }
+      }
+
+      function mettiInPausa() {
+        try {
+          annullaAttesaRipetizione();
+          audio.pause();
+          aggiornaStatoPlayPausa();
+        } catch (err) {
+          aggiornaStatoPlayPausa();
+        }
+      }
+
+      btnPlay.addEventListener("click", avviaRiproduzione);
+      btnPausa.addEventListener("click", mettiInPausa);
+
+      audio.addEventListener("play", function () {
+        mantieniIntonazione();
+        aggiornaStatoPlayPausa();
+        avviaControlloLoop();
+      });
+
+      audio.addEventListener("pause", function () {
+        aggiornaStatoPlayPausa();
+      });
+
+      audio.addEventListener("timeupdate", function () {
+        aggiornaInterfacciaTempo();
+        controllaPassaggioLoop();
+      });
+
+      audio.addEventListener("ended", function () {
+        if (loopAttivo && inizioLoop !== null && fineLoop !== null) {
+          gestisciFineRipetizione();
+        } else {
+          aggiornaStatoPlayPausa();
+        }
+      });
+
+      barraAvanzamento.addEventListener("input", function () {
+        trascinamentoBarra = true;
+        tempoCorrenteEl.textContent = formattaTempo(parseFloat(barraAvanzamento.value));
+      });
+
+      barraAvanzamento.addEventListener("change", function () {
+        const nuovoTempo = parseFloat(barraAvanzamento.value);
+        if (Number.isFinite(nuovoTempo) && ottieniDurata() > 0) {
+          annullaAttesaRipetizione();
+          audio.currentTime = nuovoTempo;
+        }
+        trascinamentoBarra = false;
+        aggiornaInterfacciaTempo();
+      });
+
+      /* ========================================================================
+         2. SELEZIONE VELOCITÀ SENZA ABBASSARE L'INTONAZIONE
+         ======================================================================== */
+      mantieniIntonazione();
+
+      pulsantiVelocita.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          velocitaCorrente = parseFloat(btn.getAttribute("data-speed"));
+          mantieniIntonazione();
+
+          pulsantiVelocita.forEach(function (b) {
+            const selezionato = b === btn;
+            b.classList.toggle("attivo", selezionato);
+            b.setAttribute("aria-pressed", selezionato ? "true" : "false");
+          });
+        });
+      });
+
+      /* ========================================================================
+         3. GESTIONE LOOP DEL PASSAGGIO (SEGNA INIZIO / FINE / -1s / +1s)
+         ======================================================================== */
+      function aggiornaDisplayPuntiLoop() {
+        valoreInizioEl.textContent = inizioLoop !== null ? formattaTempo(inizioLoop) : "--:--";
+        valoreFineEl.textContent = fineLoop !== null ? formattaTempo(fineLoop) : "--:--";
+      }
+
+      btnSegnaInizio.addEventListener("click", function () {
+        const corrente = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+        const durata = ottieniDurata();
+        inizioLoop = Math.max(0, corrente);
+
+        if (fineLoop !== null && fineLoop <= inizioLoop) {
+          fineLoop = durata > 0 ? Math.min(durata, inizioLoop + 1) : inizioLoop + 1;
+        }
+        aggiornaDisplayPuntiLoop();
+        mostraAvvisoLoop("");
+      });
+
+      btnSegnaFine.addEventListener("click", function () {
+        const corrente = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+        fineLoop = Math.max(0.5, corrente);
+
+        if (inizioLoop === null) {
+          inizioLoop = 0;
+        } else if (inizioLoop >= fineLoop) {
+          inizioLoop = Math.max(0, fineLoop - 1);
+        }
+        aggiornaDisplayPuntiLoop();
+        mostraAvvisoLoop("");
+      });
+
+      function aggiustaInizio(delta) {
+        const durata = ottieniDurata();
+        if (inizioLoop === null) {
+          inizioLoop = 0;
+        }
+        let nuovo = inizioLoop + delta;
+        if (nuovo < 0) nuovo = 0;
+        if (fineLoop !== null && nuovo > fineLoop - 0.5) {
+          nuovo = Math.max(0, fineLoop - 0.5);
+        }
+        if (durata > 0 && nuovo > durata - 0.5) {
+          nuovo = Math.max(0, durata - 0.5);
+        }
+        inizioLoop = nuovo;
+        aggiornaDisplayPuntiLoop();
+      }
+
+      function aggiustaFine(delta) {
+        const durata = ottieniDurata();
+        if (fineLoop === null) {
+          fineLoop = durata > 0 ? durata : (inizioLoop !== null ? inizioLoop + 5 : 5);
+        }
+        let nuovo = fineLoop + delta;
+        const minimo = inizioLoop !== null ? inizioLoop + 0.5 : 0.5;
+        if (nuovo < minimo) nuovo = minimo;
+        if (durata > 0 && nuovo > durata) nuovo = durata;
+        fineLoop = nuovo;
+        aggiornaDisplayPuntiLoop();
+      }
+
+      btnInizioMeno.addEventListener("click", function () { aggiustaInizio(-1); });
+      btnInizioPiu.addEventListener("click", function () { aggiustaInizio(1); });
+      btnFineMeno.addEventListener("click", function () { aggiustaFine(-1); });
+      btnFinePiu.addEventListener("click", function () { aggiustaFine(1); });
+
+      function aggiornaPulsanteLoop() {
+        btnLoop.classList.toggle("loop-acceso", loopAttivo);
+        btnLoop.setAttribute("aria-pressed", loopAttivo ? "true" : "false");
+        btnLoop.textContent = loopAttivo ? "Loop acceso" : "Loop spento";
+      }
+
+      btnLoop.addEventListener("click", function () {
+        if (!loopAttivo) {
+          const durata = ottieniDurata();
+          if (inizioLoop === null && fineLoop === null) {
+            mostraAvvisoLoop("Prima usa «Segna inizio» e «Segna fine» per scegliere il passaggio.");
+            return;
+          }
+          if (inizioLoop === null) {
+            inizioLoop = 0;
+          }
+          if (fineLoop === null) {
+            fineLoop = durata > 0 ? durata : inizioLoop + 5;
+          }
+          if (fineLoop <= inizioLoop) {
+            fineLoop = inizioLoop + 1;
+          }
+
+          aggiornaDisplayPuntiLoop();
+          loopAttivo = true;
+          aggiornaPulsanteLoop();
+          mostraAvvisoLoop(
+            "Ripetizione attiva da " + formattaTempo(inizioLoop) + " a " + formattaTempo(fineLoop) + "."
+          );
+
+          if (!erroreAudioPresente) {
+            if (audio.currentTime < inizioLoop || audio.currentTime >= fineLoop) {
+              audio.currentTime = inizioLoop;
+            }
+            if (audio.paused && !inAttesaRipetizione) {
+              avviaRiproduzione();
+            }
+          }
+        } else {
+          loopAttivo = false;
+          annullaAttesaRipetizione();
+          aggiornaPulsanteLoop();
+          mostraAvvisoLoop("");
+        }
+      });
+
+      /* ========================================================================
+         4. PAUSA TRA UNA RIPETIZIONE E L'ALTRA (0, 2 O 4 SECONDI)
+         ======================================================================== */
+      pulsantiPausaLoop.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          secondiPausaLoop = parseInt(btn.getAttribute("data-pausa"), 10);
+          pulsantiPausaLoop.forEach(function (b) {
+            const selezionato = b === btn;
+            b.classList.toggle("attivo", selezionato);
+            b.setAttribute("aria-pressed", selezionato ? "true" : "false");
+          });
+        });
+      });
+
+      function annullaAttesaRipetizione() {
+        inAttesaRipetizione = false;
+        if (timerRipetizione !== null) {
+          clearTimeout(timerRipetizione);
+          timerRipetizione = null;
+        }
+        if (intervalloContoRovescia !== null) {
+          clearInterval(intervalloContoRovescia);
+          intervalloContoRovescia = null;
+        }
+      }
+
+      function gestisciFineRipetizione() {
+        if (inAttesaRipetizione || inizioLoop === null || fineLoop === null) return;
+
+        if (secondiPausaLoop <= 0) {
+          audio.currentTime = inizioLoop;
+          mantieniIntonazione();
+          if (audio.paused) {
+            audio.play().catch(function () {});
+          }
+          return;
+        }
+
+        inAttesaRipetizione = true;
+        audio.pause();
+        audio.currentTime = inizioLoop;
+        aggiornaInterfacciaTempo();
+        aggiornaStatoPlayPausa();
+
+        let rimanenti = secondiPausaLoop;
+        mostraAvvisoLoop("Pausa prima di ripetere: " + rimanenti + " s...");
+
+        intervalloContoRovescia = setInterval(function () {
+          rimanenti -= 1;
+          if (rimanenti > 0 && inAttesaRipetizione) {
+            mostraAvvisoLoop("Pausa prima di ripetere: " + rimanenti + " s...");
+          }
+        }, 1000);
+
+        timerRipetizione = setTimeout(function () {
+          const deveRiprendere = inAttesaRipetizione && loopAttivo;
+          annullaAttesaRipetizione();
+          if (deveRiprendere) {
+            mostraAvvisoLoop(
+              "Ripetizione attiva da " + formattaTempo(inizioLoop) + " a " + formattaTempo(fineLoop) + "."
+            );
+            audio.currentTime = inizioLoop;
+            mantieniIntonazione();
+            audio.play().catch(function () {});
+          }
+        }, secondiPausaLoop * 1000);
+      }
+
+      function controllaPassaggioLoop() {
+        if (!loopAttivo || inAttesaRipetizione || audio.paused) return;
+        if (inizioLoop === null || fineLoop === null) return;
+
+        if (audio.currentTime >= fineLoop) {
+          gestisciFineRipetizione();
+        }
+      }
+
+      function avviaControlloLoop() {
+        if (rafLoopId !== null) return;
+        function ciclo() {
+          if (!audio.paused && loopAttivo) {
+            controllaPassaggioLoop();
+            rafLoopId = requestAnimationFrame(ciclo);
+          } else {
+            rafLoopId = null;
+          }
+        }
+        rafLoopId = requestAnimationFrame(ciclo);
+      }
+
+      /* ========================================================================
+         5. METRONOMO SEPARATO CON SINTESI AUDIO DEL BROWSER (WEB AUDIO API)
+         ======================================================================== */
+      const btnBpmMeno = document.getElementById("btn-bpm-meno");
+      const btnBpmPiu = document.getElementById("btn-bpm-piu");
+      const valoreBpmEl = document.getElementById("valore-bpm");
+      const btnMetronomo = document.getElementById("btn-metronomo");
+      const indicatoriBattito = [
+        document.getElementById("battito-0"),
+        document.getElementById("battito-1"),
+        document.getElementById("battito-2"),
+        document.getElementById("battito-3")
+      ];
+
+      let bpm = 80;
+      let metronomoAttivo = false;
+      let audioCtx = null;
+      let battitoCorrente = 0; // 0 = primo di 4 (accento), 1, 2, 3 = successivi
+      let prossimoTempoBattito = 0;
+      let timerSchedulerMetronomo = null;
+
+      function aggiornaBpm(nuovoBpm) {
+        bpm = Math.min(200, Math.max(40, nuovoBpm));
+        valoreBpmEl.textContent = String(bpm);
+      }
+
+      /**
+       * Permette sia il tocco singolo che la pressione prolungata sui tasti - e +.
+       */
+      function collegaRipetizionePulsante(pulsante, variazione) {
+        let timeoutPressione = null;
+        let intervalloPressione = null;
+
+        function fermaRipetizione() {
+          clearTimeout(timeoutPressione);
+          clearInterval(intervalloPressione);
+          timeoutPressione = null;
+          intervalloPressione = null;
+        }
+
+        pulsante.addEventListener("pointerdown", function (e) {
+          if (e.button !== undefined && e.button !== 0) return;
+          aggiornaBpm(bpm + variazione);
+          fermaRipetizione();
+          timeoutPressione = setTimeout(function () {
+            intervalloPressione = setInterval(function () {
+              aggiornaBpm(bpm + variazione);
+            }, 85);
+          }, 420);
+        });
+
+        pulsante.addEventListener("pointerup", fermaRipetizione);
+        pulsante.addEventListener("pointerleave", fermaRipetizione);
+        pulsante.addEventListener("pointercancel", fermaRipetizione);
+      }
+
+      collegaRipetizionePulsante(btnBpmMeno, -1);
+      collegaRipetizionePulsante(btnBpmPiu, 1);
+
+      function illuminaBattito(indiceBattito) {
+        indicatoriBattito.forEach(function (el, idx) {
+          el.classList.remove("accento-attivo", "normale-attivo");
+          if (idx === indiceBattito) {
+            el.classList.add(idx === 0 ? "accento-attivo" : "normale-attivo");
+          }
+        });
+      }
+
+      function spegniIndicatoriBattito() {
+        indicatoriBattito.forEach(function (el) {
+          el.classList.remove("accento-attivo", "normale-attivo");
+        });
+      }
+
+      /**
+       * Genera un impulso sonoro preciso nel tempo con accento sul primo battito di 4.
+       */
+      function programmaSuonoBattito(indiceBattito, tempoAudio) {
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          const isAccento = indiceBattito === 0;
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(isAccento ? 1046.5 : 660, tempoAudio);
+
+          const volumeMax = isAccento ? 0.9 : 0.45;
+          const durataSuono = isAccento ? 0.065 : 0.045;
+
+          gain.gain.setValueAtTime(0.0001, tempoAudio);
+          gain.gain.linearRampToValueAtTime(volumeMax, tempoAudio + 0.003);
+          gain.gain.exponentialRampToValueAtTime(0.0001, tempoAudio + durataSuono);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(tempoAudio);
+          osc.stop(tempoAudio + durataSuono + 0.01);
+
+          const ritardoMs = Math.max(0, (tempoAudio - audioCtx.currentTime) * 1000);
+          setTimeout(function () {
+            if (metronomoAttivo) {
+              illuminaBattito(indiceBattito);
+            }
+          }, ritardoMs);
+        } catch (err) {
+          /* Evita interruzioni in caso di stato audio non pronto */
+        }
+      }
+
+      function schedulerMetronomo() {
+        if (!metronomoAttivo || !audioCtx) return;
+        const anticipoSec = 0.1;
+
+        while (prossimoTempoBattito < audioCtx.currentTime + anticipoSec) {
+          programmaSuonoBattito(battitoCorrente, prossimoTempoBattito);
+          const secondiPerBattito = 60.0 / bpm;
+          prossimoTempoBattito += secondiPerBattito;
+          battitoCorrente = (battitoCorrente + 1) % 4;
+        }
+      }
+
+      function avviaMetronomo() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+
+          if (!audioCtx) {
+            audioCtx = new AudioContextClass();
+          }
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+
+          metronomoAttivo = true;
+          battitoCorrente = 0;
+          prossimoTempoBattito = audioCtx.currentTime + 0.03;
+
+          btnMetronomo.classList.add("attivo");
+          btnMetronomo.setAttribute("aria-pressed", "true");
+          btnMetronomo.textContent = "Ferma metronomo";
+
+          schedulerMetronomo();
+          timerSchedulerMetronomo = setInterval(schedulerMetronomo, 25);
+        } catch (err) {
+          fermaMetronomo();
+        }
+      }
+
+      function fermaMetronomo() {
+        metronomoAttivo = false;
+        if (timerSchedulerMetronomo !== null) {
+          clearInterval(timerSchedulerMetronomo);
+          timerSchedulerMetronomo = null;
+        }
+        spegniIndicatoriBattito();
+        btnMetronomo.classList.remove("attivo");
+        btnMetronomo.setAttribute("aria-pressed", "false");
+        btnMetronomo.textContent = "Avvia metronomo";
+      }
+
+      btnMetronomo.addEventListener("click", function () {
+        if (metronomoAttivo) {
+          fermaMetronomo();
+        } else {
+          avviaMetronomo();
+        }
+      });
+
+      /* Inizializzazione stato pulsanti */
+      aggiornaStatoPlayPausa();
+    })();
+  </script>
+</body>
+</html>
